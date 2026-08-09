@@ -688,6 +688,10 @@ button:disabled {
   font-size: 0.86rem;
 }
 
+.document-header {
+  display: none;
+}
+
 @media (max-width: 1200px) {
   .main-grid {
     grid-template-columns: 1fr;

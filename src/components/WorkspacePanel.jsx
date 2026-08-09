@@ -32,6 +32,7 @@ function WorkspacePanel({
   commentDraft,
   setCommentDraft,
   handleAddComment,
+  handleDeleteClaim,
   feedback,
 }) {
   const isReviewer = permissions.label === 'Reviewer'
@@ -116,6 +117,16 @@ function WorkspacePanel({
               Assign
             </button>
           ) : null}
+          {permissions.canDelete && !isReviewer ? (
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => openDeleteModal(selectedClaim)}
+              aria-label={`Delete ${selectedClaim?.claimant ?? 'selected claim'}`}
+            >
+                Delete
+            </button>
+          ) : null}
           {lastSplitBackup ? <button type="button" className="ghost" onClick={undoSplit}>Undo Split</button> : null}
           {lastMergeBackup ? <button type="button" className="ghost" onClick={undoMerge}>Undo Merge</button> : null}
           {operationState.status === 'running' ? (
@@ -167,7 +178,6 @@ function WorkspacePanel({
 
           <div className="workspace-main">
             <div className="page-list-panel">
-              <h4>{selectedPageData ? `Page ${selectedPage}` : selectedClaim?.claimant ?? 'Claimant comments'}</h4>
               <p>
                 {selectedPageData
                   ? 'Comments stay attached to the selected page even during long-running operations.'
