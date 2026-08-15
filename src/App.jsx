@@ -51,6 +51,7 @@ function App() {
     if (user?.role) setRole(user.role)
   }, [user])
 
+
 // Inside App component:
 const loadClaimsFromApi = useCallback(async () => {
   if (!isAuthenticated) return
@@ -135,6 +136,24 @@ const loadClaimsFromApi = useCallback(async () => {
   })
 
   useEffect(() => {
+  if (!selectedClaim || !isAuthenticated) return
+
+  setSelectedClaimId(selectedClaim.id)
+  setSelectedPage(null)
+  
+  // Reset the workspace document to a new snapshot of the currently selected claim
+  setWorkspaceDoc(createDocumentSnapshot(selectedClaim))
+  
+  setFeedback(`Streaming ${selectedClaim.claimant}'s document set...`)
+
+  let isSubscribed = true
+  setDocLoading(true)
+  setDocProgress(0)
+
+  return () => { isSubscribed = false }
+}, [selectedClaim?.id, isAuthenticated])
+
+  useEffect(() => {
     if (!selectedClaim || !isAuthenticated) return
 
     setSelectedClaimId(selectedClaim.id)
@@ -142,7 +161,7 @@ const loadClaimsFromApi = useCallback(async () => {
     setFeedback(`Streaming ${selectedClaim.claimant}'s document set...`)
 
     let isSubscribed = true
-    setDocLoading(true)
+    setDocLoading(false)
     setDocProgress(0)
 
     return () => { isSubscribed = false }

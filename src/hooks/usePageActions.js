@@ -25,35 +25,60 @@ export default function usePageActions({
     return null
   }
 
-  const handlePageDelete = useCallback(() => {
-    if (!hasSelectedPage) {
-      setLastError('Select a page before deleting it.')
-      return
-    }
+const handlePageDelete = useCallback(() => {
+  if (!hasSelectedPage) {
+    setLastError('Select a page before deleting it.')
+    return
+  }
 
-    if (!permissions.canDelete) {
-      setLastError('Delete is blocked for this role.')
-      showToast('Delete is blocked for this role.', 'error')
-      return
-    }
+  if (!permissions.canDelete) {
+    setLastError('Delete is blocked for this role.')
+    showToast('Delete is blocked for this role.', 'error')
+    return
+  }
 
-    setWorkspaceDoc((current) => {
-      const updatedPages = current.pages.filter((page) => page.id !== selectedPage)
-      const nextSelectedPage = updatedPages.length ? updatedPages[0].id : null
-      if (nextSelectedPage === null) {
-        setSelectedPage(1)
-      } else if (nextSelectedPage !== selectedPage) {
-        setSelectedPage(nextSelectedPage)
+  const targetPageId = selectedPage
+
+  setWorkspaceDoc((current) => {
+    if (!current) return current
+
+    // 1. Filter flat pages array using String cast comparison
+    const updatedPages = (current.pages || []).filter(
+      (page) => String(page.id) !== String(targetPageId)
+    )
+
+    // 2. Filter nested packages safely
+    const updatedPackages = (current.packages || []).map((pkg) => {
+      if (pkg && Array.isArray(pkg.pages)) {
+        return {
+          ...pkg,
+          pages: pkg.pages.filter((page) => String(page.id) !== String(targetPageId)),
+        }
       }
-      return {
-        ...current,
-        pages: updatedPages,
+      if (Array.isArray(pkg)) {
+        return pkg.filter((page) => String(page.id) !== String(targetPageId))
       }
+      return pkg
     })
 
-    setFeedback(`Deleted page ${selectedPage} from the document.`)
-    showToast('Document page deleted successfully.', 'success')
-  }, [hasSelectedPage, permissions.canDelete, setLastError, showToast, setWorkspaceDoc, selectedPage, setSelectedPage, setFeedback])
+    // 3. Determine next selected page safely
+    const remainingPages = updatedPages.length > 0
+      ? updatedPages
+      : (updatedPackages || []).flatMap((pkg) => Array.isArray(pkg) ? pkg : (pkg?.pages || []))
+
+    const nextSelectedPageId = remainingPages.length > 0 ? remainingPages[0].id : null
+    setSelectedPage(nextSelectedPageId)
+
+    return {
+      ...current,
+      pages: updatedPages,
+      packages: updatedPackages,
+    }
+  })
+
+  setFeedback(`Deleted page ${targetPageId} from the document.`)
+  showToast('Document page deleted successfully.', 'success')
+}, [hasSelectedPage, permissions.canDelete, selectedPage, setLastError, setWorkspaceDoc, setSelectedPage, setFeedback, showToast])
 
   const handleAddComment = useCallback(() => {
     if (!commentDraft.trim()) {
@@ -72,10 +97,12 @@ export default function usePageActions({
         })
 
         const nextPackages = current.packages?.length
-          ? current.packages.map((pkg) => pkg.map((page) => {
-            if (page.id !== selectedPage) return page
-            return { ...page, comments: [...page.comments, draft] }
-          }))
+          ? current.packages.map((pkg) =>
+              pkg.map((page) => {
+                if (page.id !== selectedPage) return page
+                return { ...page, comments: [...page.comments, draft] }
+              })
+            )
           : current.packages
 
         return {

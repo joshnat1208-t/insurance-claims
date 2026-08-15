@@ -5,7 +5,6 @@ function WorkspacePanel({
   workspaceDoc,
   formatBytes,
   docProgress,
-  docLoading,
   permissions,
   openSplitPreview,
   openMergePreview,
@@ -34,6 +33,7 @@ function WorkspacePanel({
   handleAddComment,
   handleDeleteClaim,
   feedback,
+  handleOpenDeleteModal,
 }) {
   const isReviewer = permissions.label === 'Reviewer'
   const displayedPages = workspaceDoc?.packages?.length
@@ -69,7 +69,6 @@ function WorkspacePanel({
             <div className="progress-bar" aria-hidden="true">
               <span style={{ width: `${docProgress}%` }} />
             </div>
-            <span>{docLoading ? `Streaming ${docProgress}%` : 'Ready for review'}</span>
           </div>
         </div>
 
@@ -79,7 +78,6 @@ function WorkspacePanel({
               type="button"
               className="primary"
               onClick={() => openSplitPreview()}
-              disabled={docLoading}
               aria-label={`Split document for ${selectedClaim?.claimant ?? 'selected claim'}`}
             >
               Split
@@ -90,7 +88,6 @@ function WorkspacePanel({
               type="button"
               className="secondary"
               onClick={() => openMergePreview()}
-              disabled={docLoading || !canMergeNow}
               title={availablePackageCount < 2 ? 'Not enough document to merge' : ''}
               aria-label={`Merge document for ${selectedClaim?.claimant ?? 'selected claim'}`}
             >
@@ -121,10 +118,11 @@ function WorkspacePanel({
             <button
               type="button"
               className="secondary"
-              onClick={() => openDeleteModal(selectedClaim)}
-              aria-label={`Delete ${selectedClaim?.claimant ?? 'selected claim'}`}
+              onClick={() => selectedPage && handlePageDelete(selectedPage)}
+              disabled={!selectedPage}
+              aria-label={`Delete selected page`}
             >
-                Delete
+              Delete Page
             </button>
           ) : null}
           {lastSplitBackup ? <button type="button" className="ghost" onClick={undoSplit}>Undo Split</button> : null}

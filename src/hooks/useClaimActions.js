@@ -123,6 +123,7 @@ export default function useClaimActions({
   const handleDeleteClick = useCallback((e) => {
     const id = Number(e.currentTarget.dataset.id)
     const claim = claims.find((c) => c.id === id)
+    console.log(claim)
     if (claim) handleClaimDelete(claim)
   }, [claims, handleClaimDelete])
 
