@@ -45,7 +45,7 @@ export default function Topbar({
             aria-expanded={dropdownOpen}
             aria-label="User profile menu"
           >
-            <span className="profile-name">{user?.username || 'User'}</span>
+            <span className="profile-name">{role || 'User'}</span>
             <span className="dropdown-chevron">▾</span>
           </button>
 
